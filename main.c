@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 
 #include "tc/tc.h"
 
@@ -18,11 +19,27 @@ void sigwinch_handler(int sig);
 enum {
 	max_menu_entries_len = 64
 };
+const char command_prefix[] = "awww img -t none ~/Pictures/Wallpapers/";
 const char menu_entries[][max_menu_entries_len] = {
-	"start",
-	"start special",
-	"about",
-	"quit"
+	"animated_wallpaper.gif",
+	"asteroid.gif",
+	"big_city.gif",
+	"big_temple.gif",
+	"bird-on-branch.gif",
+	"electronic-circuit-board.gif",
+	"Futuristic_Dreamscape.gif",
+	"jager.gif",
+	"luna_rossa.gif",
+	"Minimal_Galaxy_2_prob4.gif",
+	"pcb_show.gif",
+	"snowfall-in-forest.gif",
+	"technoblade_wallpaper.jpg",
+	"wallpaper01.png",
+	"wallpaper02.png",
+	"wallpaper03.png",
+	"wallpaper04.png",
+	"wallpaper05.png",
+	"wallpaper06.png",
 };
 const size_t menu_entries_size = sizeof(menu_entries) / sizeof(menu_entries[0]);
 
@@ -52,12 +69,6 @@ int main(void) {
 			//just quit like with SIGINT
 			quit_program();
 		}
-		if(actions.enter == true) {
-			tc_move_to(terminal_size_y, 1);
-			printf("%s", menu_entries[state]);
-			fflush(stdout);
-			actions.enter = false;
-		}
 		if(actions.move_up == true) {
 			state = state > 0?state - 1:menu_entries_size - 1;
 			actions.refresh = true;
@@ -68,6 +79,13 @@ int main(void) {
 			actions.refresh = true;
 			actions.move_down = false;
 		}
+		if(actions.enter == true) {
+			char buff[max_menu_entries_len + sizeof(command_prefix)/sizeof(char)];
+			snprintf(buff, max_menu_entries_len + sizeof(command_prefix)/sizeof(char), "%s%s", command_prefix, menu_entries[state]);
+			system(buff);
+			actions.enter = false;
+		}
+		usleep(50000);
 	}
 	
 	tc_restore_defaults();
