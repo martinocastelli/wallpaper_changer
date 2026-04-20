@@ -152,7 +152,7 @@ void tc_get_pressed_keys(tc_keyboard_input_d* keyboard_input) {
 	for(size_t i = 0;buff[i] != '\0';i++) {
 		if (buff[i] != '\033') {
 			keyboard_input->normal_input[x++] = buff[i];
-		} else {
+		} else if (buff[i + 1] == '[') {
 			switch(buff[i + 2]) {
 				case 'A': {
 					keyboard_input->escape_input[y++] = TC_ARROW_UP;

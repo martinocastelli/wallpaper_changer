@@ -19,19 +19,14 @@ void sigwinch_handler(int sig);
 enum {
 	max_menu_entries_len = 64
 };
-const char command_prefix[] = "awww img -t none ~/Pictures/Wallpapers/";
+const char command_prefix[] = "awww img -t grow --transition-pos 10,10 --transition-duration 2  ~/Pictures/Wallpapers/";
 const char menu_entries[][max_menu_entries_len] = {
 	"animated_wallpaper.gif",
-	"asteroid.gif",
 	"big_city.gif",
 	"big_temple.gif",
 	"bird-on-branch.gif",
-	"electronic-circuit-board.gif",
-	"Futuristic_Dreamscape.gif",
 	"jager.gif",
 	"luna_rossa.gif",
-	"Minimal_Galaxy_2_prob4.gif",
-	"pcb_show.gif",
 	"snowfall-in-forest.gif",
 	"technoblade_wallpaper.jpg",
 	"wallpaper01.png",
