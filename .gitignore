@@ -1,2 +1,7 @@
 tags
 *.out
+tc/.git
+tc/.gitignore
+tc/main.c
+tc/Makefile
+
