@@ -19,7 +19,7 @@ void sigwinch_handler(int sig);
 enum {
 	max_menu_entries_len = 64
 };
-const char command_prefix[] = "awww img -t grow --transition-pos 10,10 --transition-duration 2  ~/Pictures/Wallpapers/";
+const char command_prefix[] = "awww img -t grow --transition-pos 10,10 --transition-duration 1.5  ~/Pictures/Wallpapers/";
 const char menu_entries[][max_menu_entries_len] = {
 	"animated_wallpaper.gif",
 	"big_city.gif",
@@ -37,9 +37,6 @@ const char menu_entries[][max_menu_entries_len] = {
 	"wallpaper06.png",
 };
 const size_t menu_entries_size = sizeof(menu_entries) / sizeof(menu_entries[0]);
-
-static uint16_t terminal_size_x;
-static uint16_t terminal_size_y;
 
 static uint8_t state = 0;
 typedef struct {
@@ -97,8 +94,6 @@ void initial_setup(void) {
 	tc_set_canonical_mode(false);
 	tc_hide_cursor(true);
 
-	tc_get_terminal_size(&terminal_size_y, &terminal_size_x);
-
 	actions.enter = false;
 	actions.quit = false;
 	actions.refresh = true;
@@ -136,15 +131,24 @@ void parse_input(void) {
 }
 void redraw_screen(void) {
 	tc_erase_to_origin();
+	tc_set_color_standard(RED);
+	tc_set_underline(true);
+	tc_set_bold(true);
+	printf("Choose a wallpaper\n");
+	tc_set_underline(false);
+	tc_set_bold(false);
 	for(uint16_t i = 0;i < menu_entries_size;i++) {
 		if(i == state) {
-			tc_set_color_standard(BLACK);
+			tc_set_color_standard(BLACK); 
 			tc_set_bg_color_standard(BLUE);
 		} else {
 			tc_set_color_default();
+			tc_set_color_standard(GREEN);
 		}
-		// printf("scemo in culo %d                         \n", i);
-		printf("%s\n", menu_entries[i]);
+		if(i != 0) {
+			putchar('\n');
+		}
+		printf("%s", menu_entries[i]);
 	}
 	fflush(stdout);
 	tc_set_color_default();
@@ -163,8 +167,5 @@ void sigint_handler(int sig) {
 }
 
 void sigwinch_handler(int sig) {
-	uint16_t row, col;
-	tc_get_terminal_size(&row, &col);
-	terminal_size_x = col;
-	terminal_size_y = row;
+	actions.refresh = true;
 }
