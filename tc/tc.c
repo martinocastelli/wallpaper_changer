@@ -8,9 +8,13 @@
 
 static struct termios tty_default, tty_state;
 
+static tc_text_font_d present_state;
+
 void tc_init(void) {
 	tcgetattr(STDIN_FILENO, &tty_state);
 	tty_default = tty_state;
+
+	tc_reset_font();
 }
 void tc_restore_defaults(void) {
 	tcsetattr(STDIN_FILENO, TCSANOW, &tty_default);
@@ -63,44 +67,98 @@ void tc_erase_all_after(void) {
 
 void tc_reset_font(void) {
 	printf("\033[0m");
+	
+	present_state.bold = false;
+	present_state.underline = false;
+	present_state.blinking = false;
+	present_state.strikethrough = false;
+	present_state.fg_color = TC_COLOR_NONE;
+	present_state.bg_color = TC_COLOR_NONE;
 }
 void tc_set_bold(bool set_Nset) {
-	printf("\033[%dm", set_Nset?1:22);
+	if(present_state.bold != set_Nset) {
+		printf("\033[%dm", set_Nset?1:22);
+		present_state.bold = set_Nset;
+	}
 }
 void tc_set_underline(bool set_Nset) {
-	printf("\033[%dm", set_Nset?4:24);
+	if(present_state.underline != set_Nset) {
+		printf("\033[%dm", set_Nset?4:24);
+		present_state.underline = set_Nset;
+	}
 }
 void tc_set_blinking(bool set_Nset) {
-	printf("\033[%dm", set_Nset?5:25);
+	if(present_state.blinking != set_Nset) {
+		printf("\033[%dm", set_Nset?5:25);
+		present_state.blinking = set_Nset;
+	}
 }
 void tc_set_strikethrough(bool set_Nset) {
-	printf("\033[%dm", set_Nset?9:29);
+	if(present_state.strikethrough != set_Nset) {
+		printf("\033[%dm", set_Nset?9:29);
+		present_state.strikethrough = set_Nset;
+	}
 }
 
 void tc_set_color_default(void) {
 	printf("\033[39m\033[49m");
+	present_state.fg_color = TC_COLOR_DEFAULT;
 }
 void tc_set_color_standard(tc_standard_color_e color) {
-	printf("\033[38;5;%um", color);
+	if(present_state.fg_color != color) {
+		if (color == TC_COLOR_DEFAULT) {
+			tc_set_color_default();
+		} else {
+			printf("\033[38;5;%um", color);
+		}
+		present_state.fg_color = color;
+	}
 }
 void tc_set_color_6x6x6(uint8_t r, uint8_t g, uint8_t b) {
 	if (r < 6 && g < 6 && b <6) {
 		printf("\033[38;5;%um", 16 + 36 * r + 6 * g + b);
+		present_state.fg_color = TC_COLOR_NONE;
 	}
 }
 void tc_set_color_24bit(uint8_t r, uint8_t g, uint8_t b) {
 	printf("\033[38;2;%u;%u;%um", r, g, b);
+	present_state.fg_color = TC_COLOR_NONE;
+}
+void tc_set_bg_color_default(void) {
+	printf("\033[49m\033[49m");
+	present_state.bg_color = TC_COLOR_DEFAULT;
 }
 void tc_set_bg_color_standard(tc_standard_color_e color) {
-	printf("\033[48;5;%um", color);
+	if(present_state.bg_color != color) {
+		if (color == TC_COLOR_DEFAULT) {
+			tc_set_bg_color_default();
+		} else {
+			printf("\033[48;5;%um", color);
+		}
+		present_state.bg_color = color;
+	}
 }
 void tc_set_bg_color_6x6x6(uint8_t r, uint8_t g, uint8_t b) {
-	if (r < 6 && g < 6 && b <6) {
+	if (r < 6 && g < 6 && b < 6) {
 		printf("\033[48;5;%um", 16 + 36 * r + 6 * g + b);
+		present_state.bg_color = TC_COLOR_NONE;
 	}
 }
 void tc_set_bg_color_24bit(uint8_t r, uint8_t g, uint8_t b) {
 	printf("\033[48;2;%u;%u;%um", r, g, b);
+	present_state.bg_color = TC_COLOR_NONE;
+}
+
+void tc_set_text_font(const tc_text_font_d *text_font) {
+	tc_set_bold(text_font->bold);
+	tc_set_underline(text_font->underline);
+	tc_set_blinking(text_font->blinking);
+	tc_set_strikethrough(text_font->strikethrough);
+	tc_set_color_standard(text_font->fg_color);
+	tc_set_bg_color_standard(text_font->bg_color);
+}
+tc_text_font_d tc_get_present_text_font(void) {
+	return present_state;
 }
 
 void tc_get_terminal_size(uint16_t* rows, uint16_t* columns) {
