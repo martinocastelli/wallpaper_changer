@@ -101,7 +101,7 @@ void tc_set_strikethrough(bool set_Nset) {
 }
 
 void tc_set_color_default(void) {
-	printf("\033[39m\033[49m");
+	printf("\033[39m");
 	present_state.fg_color = TC_COLOR_DEFAULT;
 }
 void tc_set_color_standard(tc_standard_color_e color) {
@@ -125,7 +125,7 @@ void tc_set_color_24bit(uint8_t r, uint8_t g, uint8_t b) {
 	present_state.fg_color = TC_COLOR_NONE;
 }
 void tc_set_bg_color_default(void) {
-	printf("\033[49m\033[49m");
+	printf("\033[49m");
 	present_state.bg_color = TC_COLOR_DEFAULT;
 }
 void tc_set_bg_color_standard(tc_standard_color_e color) {

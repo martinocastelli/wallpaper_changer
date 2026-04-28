@@ -30,6 +30,7 @@ const char menu_entries[][max_menu_entries_len] = {
 	"celestial-veil.gif",
 	"jager.gif",
 	"luna_rossa.gif",
+	"silver-wolf.gif",
 	"snowfall-in-forest.gif",
 	"technoblade_wallpaper.jpg",
 	"wallpaper01.png",
@@ -70,7 +71,7 @@ int main(void) {
 			actions.move_up = false;
 		}
 		if(actions.move_down == true) {
-			state = state < menu_entries_size - 1?state + 1:0;
+			state = (state < menu_entries_size - 1)?state + 1:0;
 			actions.refresh = true;
 			actions.move_down = false;
 		}
@@ -107,20 +108,14 @@ void initial_setup(void) {
 void parse_input(void) {
 	static tc_keyboard_input_d buff;
 	tc_get_pressed_keys(&buff);
-	for(size_t i = 0;i < buff.escape_input_size;i++) {
-		switch(buff.escape_input[i]) {
-			case TC_ARROW_UP: {
-				actions.move_up = true;
-			} break;
-			case TC_ARROW_DOWN: {
-				actions.move_down = true;
-			} break;
-			default: {
-			}
-		}
-	}
 	for(size_t i = 0;i < buff.normal_input_size;i++) {
 		switch(buff.normal_input[i]) {
+			case 'k': {
+				actions.move_up = true;
+			} break;
+			case 'j': {
+				actions.move_down = true;
+			} break;
 			case '\n': {
 				actions.enter = true;
 			} break;
@@ -134,27 +129,31 @@ void parse_input(void) {
 }
 void redraw_screen(void) {
 	tc_erase_to_origin();
+	tc_reset_font();
+	tc_text_font_d font = tc_get_present_text_font();
+
+	// title
 	tc_set_color_standard(TC_RED);
 	tc_set_underline(true);
 	tc_set_bold(true);
 	printf("Choose a wallpaper\n");
-	tc_set_underline(false);
-	tc_set_bold(false);
+	
+	// list
 	for(uint16_t i = 0;i < menu_entries_size;i++) {
 		if(i == state) {
-			tc_set_color_standard(TC_BLACK); 
-			tc_set_bg_color_standard(TC_BLUE);
+			font.fg_color = TC_BLACK;
+			font.bg_color = TC_BLUE;
 		} else {
-			tc_set_color_default();
-			tc_set_color_standard(TC_GREEN);
+			font.fg_color = TC_GREEN;
+			font.bg_color = TC_COLOR_DEFAULT;
 		}
+		tc_set_text_font(&font);
 		if(i != 0) {
 			putchar('\n');
 		}
 		printf("%s", menu_entries[i]);
 	}
 	fflush(stdout);
-	tc_set_color_default();
 }
 void quit_program(void) {
 	tc_reset_font();
