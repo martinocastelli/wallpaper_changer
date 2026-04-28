@@ -22,9 +22,12 @@ enum {
 const char command_prefix[] = "awww img -t grow --transition-pos 10,10 --transition-duration 1.5  ~/Pictures/Wallpapers/";
 const char menu_entries[][max_menu_entries_len] = {
 	"animated_wallpaper.gif",
+	"armoury-swimsuit-girl.gif",
 	"big_city.gif",
 	"big_temple.gif",
 	"bird-on-branch.gif",
+	"black-hole.gif",
+	"celestial-veil.gif",
 	"jager.gif",
 	"luna_rossa.gif",
 	"snowfall-in-forest.gif",
@@ -131,7 +134,7 @@ void parse_input(void) {
 }
 void redraw_screen(void) {
 	tc_erase_to_origin();
-	tc_set_color_standard(RED);
+	tc_set_color_standard(TC_RED);
 	tc_set_underline(true);
 	tc_set_bold(true);
 	printf("Choose a wallpaper\n");
@@ -139,11 +142,11 @@ void redraw_screen(void) {
 	tc_set_bold(false);
 	for(uint16_t i = 0;i < menu_entries_size;i++) {
 		if(i == state) {
-			tc_set_color_standard(BLACK); 
-			tc_set_bg_color_standard(BLUE);
+			tc_set_color_standard(TC_BLACK); 
+			tc_set_bg_color_standard(TC_BLUE);
 		} else {
 			tc_set_color_default();
-			tc_set_color_standard(GREEN);
+			tc_set_color_standard(TC_GREEN);
 		}
 		if(i != 0) {
 			putchar('\n');
