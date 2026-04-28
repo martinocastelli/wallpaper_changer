@@ -30,7 +30,6 @@ const char menu_entries[][max_menu_entries_len] = {
 	"celestial-veil.gif",
 	"jager.gif",
 	"luna_rossa.gif",
-	"silver-wolf.gif",
 	"snowfall-in-forest.gif",
 	"technoblade_wallpaper.jpg",
 	"wallpaper01.png",
@@ -128,9 +127,10 @@ void parse_input(void) {
 	}
 }
 void redraw_screen(void) {
-	tc_erase_to_origin();
 	tc_reset_font();
 	tc_text_font_d font = tc_get_present_text_font();
+
+	tc_erase_to_origin();
 
 	// title
 	tc_set_color_standard(TC_RED);
