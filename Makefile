@@ -1,5 +1,8 @@
-change_wallpaper.out: main.c tc/*
-	gcc -o $@ main.c tc/tc.c -Wall
+main.out: main.c tc/*
+	gcc -O0 -g -o $@ main.c tc/tc.c -Wall
+
+release:
+	gcc -o change_wallpaper.out -O3 -Wall main.c tc/tc.c
 
 clean:
-	rm tags 
+	rm -f tags main.out
