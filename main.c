@@ -25,7 +25,7 @@ void sigint_handler(int sig);
 void sigwinch_handler(int sig);
 
 const char pictures_path[] = "/home/martino/Pictures/Wallpapers";
-const char select_image_command_prefix[] = "awww img -t grow --transition-pos 10,10 --transition-duration 1.5 ";
+const char select_image_command_prefix[] = "awww img -t grow --transition-pos 10,10 --transition-duration 1.5";
 const char render_image_command_prefix[] = "kitten icat --align=left --place";
 char **menu_entries = NULL;
 size_t menu_entries_size = 0;
@@ -76,7 +76,7 @@ int main(void) {
 		}
 		if(flags.enter == true) {
 			char *buff = (char *)malloc((max_menu_entries_len + sizeof(select_image_command_prefix)/sizeof(char) + 2) * sizeof(char));
-			snprintf(buff, max_menu_entries_len + sizeof(select_image_command_prefix)/sizeof(char) + sizeof(pictures_path)/sizeof(char) + 2, "%s%s%s", select_image_command_prefix, pictures_path, menu_entries[selected]);
+			snprintf(buff, max_menu_entries_len + sizeof(select_image_command_prefix)/sizeof(char) + sizeof(pictures_path)/sizeof(char) + 2, "%s %s/%s", select_image_command_prefix, pictures_path, menu_entries[selected]);
 			system(buff);
 			free(buff);
 			flags.enter = false;
