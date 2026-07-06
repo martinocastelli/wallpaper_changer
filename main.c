@@ -12,25 +12,27 @@
 
 #include "tc/tc.h"
 
-void initial_setup(void);
+static void initial_setup(void);
 
-void get_menu_entries_list(bool with_hidden);
+static void get_menu_entries_list(bool with_hidden);
 
-void parse_input(void);
-void redraw_screen(void);
-void quit_program(void);
-void print_img(uint16_t x, uint16_t y, uint16_t width);
+static void parse_input(void);
+static void redraw_screen(void);
+static void quit_program(void);
+static void print_img(uint16_t x, uint16_t y, uint16_t width);
 
-void sigint_handler(int sig);
-void sigwinch_handler(int sig);
+static void sigint_handler(int sig);
+static void sigsev_handler(int sig);
+static void sigwinch_handler(int sig);
 
-const char pictures_path[] = "/home/martino/Pictures/Wallpapers";
-const char select_image_command_prefix[] = "awww img -t grow --transition-pos 10,10 --transition-duration 1.5";
-const char render_image_command_prefix[] = "kitten icat --align=left --place";
-char **menu_entries = NULL;
-size_t menu_entries_size = 0;
-size_t menu_entries_non_gif_size = 0;
-size_t max_menu_entries_len = 0;
+static const char pictures_path[] = "/home/martino/Pictures/Wallpapers";
+static const char select_image_command_prefix[] = "awww img -t grow --transition-pos 10,10 --transition-duration 1.5";
+static const char render_image_command_prefix[] = "kitten icat --align=left --place";
+static char **menu_entries = NULL;
+static size_t menu_entries_size = 0;
+static size_t menu_entries_max_size = 0;
+static size_t max_menu_entries_len = 0;
+static size_t menu_entries_non_gif_size = 0;
 
 static uint8_t selected = 0;
 typedef struct {
@@ -43,28 +45,36 @@ typedef struct {
 } flags_d;
 static flags_d flags;
 
-int main(void) {
+int main(int argc, char **argv) {
 	initial_setup();
-
 	get_menu_entries_list(false);
+
+	if((argc >= 2) && (strncmp(argv[1], "-r", 3) == 0)) {
+		srand(time(NULL));
+		char *buff = (char *)malloc((max_menu_entries_len + sizeof(select_image_command_prefix)/sizeof(char) + 2) * sizeof(char));
+		snprintf(buff, max_menu_entries_len + sizeof(select_image_command_prefix)/sizeof(char) + sizeof(pictures_path)/sizeof(char) + 2, "%s %s/%s", select_image_command_prefix, pictures_path, menu_entries[rand() % menu_entries_size]);
+		system(buff);
+		free(buff);
+		quit_program();
+	}
 
 	while(true) {
 		parse_input();
 		if(flags.quit == true) {
-			//just quit like with SIGINT
 			quit_program();
 		}
 		if(flags.move_up == true) {
-			selected = selected > 0?selected - 1:menu_entries_size - 1;
+			selected = (selected > 0)?(selected - 1):(menu_entries_size - 1);
 			flags.refresh = true;
 			flags.move_up = false;
 		}
 		if(flags.move_down == true) {
-			selected = (selected < menu_entries_size - 1)?selected + 1:0;
+			selected = (selected < menu_entries_size - 1)?(selected + 1):0;
 			flags.refresh = true;
 			flags.move_down = false;
 		}
 		if(flags.toggle_hidden == true) {
+			sleep(2);
 			static bool state = false;
 			state = !state;
 			get_menu_entries_list(state);
@@ -75,7 +85,7 @@ int main(void) {
 			flags.toggle_hidden = false;
 		}
 		if(flags.enter == true) {
-			char *buff = (char *)malloc((max_menu_entries_len + sizeof(select_image_command_prefix)/sizeof(char) + 2) * sizeof(char));
+			char *buff = (char *)malloc((max_menu_entries_len + sizeof(select_image_command_prefix)/sizeof(char) + sizeof(pictures_path)/sizeof(char) + 2) * sizeof(char));
 			snprintf(buff, max_menu_entries_len + sizeof(select_image_command_prefix)/sizeof(char) + sizeof(pictures_path)/sizeof(char) + 2, "%s %s/%s", select_image_command_prefix, pictures_path, menu_entries[selected]);
 			system(buff);
 			free(buff);
@@ -94,6 +104,7 @@ int main(void) {
 
 void initial_setup(void) {
 	signal(SIGINT, sigint_handler);
+	signal(SIGSEGV, sigsev_handler);
 	signal(SIGWINCH, sigwinch_handler);
 
 	tc_init();
@@ -124,23 +135,36 @@ void get_menu_entries_list(bool with_hidden) {
 		glob(".*.gif", GLOB_APPEND | GLOB_BRACE, NULL, &pglob);
 	}
 
-	if(menu_entries != NULL) {
-		for(size_t i = 0;i < menu_entries_size;i++) {
-			free(menu_entries[i]);
+	// resize list if bigger
+	if(menu_entries_max_size < pglob.gl_pathc) {
+		menu_entries = realloc(menu_entries, pglob.gl_pathc * sizeof(char*));
+		for(size_t i = menu_entries_max_size;i < pglob.gl_pathc;i++) {
+			menu_entries[i] = malloc((max_menu_entries_len + 1) * sizeof(char));
 		}
-		free(menu_entries);
+		menu_entries_max_size = pglob.gl_pathc;
 	}
 	menu_entries_size = pglob.gl_pathc;
-	menu_entries = (char **)calloc(pglob.gl_pathc, sizeof(char *));
-	for(size_t i = 0;i < pglob.gl_pathc;i++) {
+
+	//search longer string
+	size_t biggest_len = 0;
+	for(size_t i = 0;i < menu_entries_size;i++) {
 		size_t len = strlen(pglob.gl_pathv[i]);
-		if (len > max_menu_entries_len) {
-			max_menu_entries_len = len;
+		if(len > biggest_len) {
+			biggest_len = len;
 		}
-		printf("%s %lu %lu\n", pglob.gl_pathv[i], len, max_menu_entries_len);
-		menu_entries[i] = (char *)malloc(len * sizeof(char));
-		strcpy(menu_entries[i], pglob.gl_pathv[i]);
 	}
+	// resize entries if bigger
+	if(biggest_len > max_menu_entries_len) {
+		max_menu_entries_len = biggest_len;
+		for(size_t i = 0;i < menu_entries_max_size;i++) {
+			menu_entries[i] = realloc(menu_entries[i], (max_menu_entries_len + 1) * sizeof(char));
+		}
+	}
+	//save entries
+	for(size_t i = 0;i < menu_entries_size;i++) {
+		strncpy(menu_entries[i], pglob.gl_pathv[i], max_menu_entries_len + 1);
+	}
+
 	globfree(&pglob);
 }
 void parse_input(void) {
@@ -205,7 +229,7 @@ void redraw_screen(void) {
 	fflush(stdout);
 }
 void quit_program(void) {
-	for(size_t i = 0;i < menu_entries_size;i++) {
+	for(size_t i = 0;i < menu_entries_max_size;i++) {
 		free(menu_entries[i]);
 	}
 	free(menu_entries);
@@ -226,6 +250,14 @@ void print_img(uint16_t x, uint16_t y, uint16_t width) {
 //callbacks
 void sigint_handler(int sig) {
 	quit_program();
+}
+static void sigsev_handler(int sig) {
+	tc_reset_font();
+	tc_erase_to_origin();
+	tc_hide_cursor(false);
+	tc_restore_defaults();
+	printf("recived SIGSEV, segmentation fault\n");
+	exit(1);
 }
 void sigwinch_handler(int sig) {
 	flags.refresh = true;
